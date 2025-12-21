@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "ecclesia_flutter (Edge)",
+      "request": "launch",
+      "type": "dart",
+      "args": ["-d", "edge"]
+    },
+    {
+      "name": "ecclesia_flutter (Web Server)",
+      "request": "launch",
+      "type": "dart",
+      "args": [
+        "-d",
+        "web-server",
+        "--web-port",
+        "5555",
+        "--web-hostname",
+        "127.0.0.1"
+      ]
+    },
+    {
+      "name": "ecclesia_flutter (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "args": ["-d", "chrome"]
+    }
+  ]
+}

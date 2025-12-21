@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "228500311166",
+    "project_id": "ecclesia-936f6",
+    "storage_bucket": "ecclesia-936f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:228500311166:android:202cc8fb8a4ede38ecdc2f",
+        "android_client_info": {
+          "package_name": "com.example.ecclesia_flutter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "228500311166-pk48qr62mce8i0aribkqfepg01ejdh4l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAPXPFHagkqdhHd6Ua62dBvhzEIocLPeaI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "228500311166-pk48qr62mce8i0aribkqfepg01ejdh4l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
