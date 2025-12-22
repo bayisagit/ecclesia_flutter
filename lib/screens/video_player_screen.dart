@@ -6,13 +6,13 @@ class VideoPlayerScreen extends StatefulWidget {
   final String title;
 
   const VideoPlayerScreen({
-    Key? key,
+    super.key,
     required this.videoUrl,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
-  _VideoPlayerScreenState createState() => _VideoPlayerScreenState();
+  State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
@@ -24,10 +24,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     final videoId = YoutubePlayer.convertUrlToId(widget.videoUrl);
     _controller = YoutubePlayerController(
       initialVideoId: videoId ?? '',
-      flags: const YoutubePlayerFlags(
-        autoPlay: true,
-        mute: false,
-      ),
+      flags: const YoutubePlayerFlags(autoPlay: true, mute: false),
     );
   }
 

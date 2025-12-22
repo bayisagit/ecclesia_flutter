@@ -7,8 +7,11 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
 import '../providers/theme_provider.dart';
-import 'login_screen.dart';
 import 'admin_feedback_screen.dart';
+import 'admin/add_post_screen.dart';
+import 'admin/add_global_post_screen.dart';
+import 'add_sermon_screen.dart';
+import 'add_event_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -18,7 +21,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final AuthService _auth = AuthService();
   final DatabaseService _db = DatabaseService();
   final TextEditingController _feedbackController = TextEditingController();
   bool _isUploading = false;
@@ -49,9 +51,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       } catch (e) {
         if (mounted) {
+          String errorMessage = 'Error uploading image';
+          if (e.toString().contains('network')) {
+            errorMessage = 'Network error. Please check your connection.';
+          } else if (e.toString().contains('permission')) {
+            errorMessage = 'Permission denied. Please allow access to photos.';
+          }
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('Error uploading image: $e')));
+          ).showSnackBar(SnackBar(content: Text('$errorMessage: $e')));
         }
       } finally {
         if (mounted) {
@@ -61,6 +69,132 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
     }
+  }
+
+  void _showChangePasswordDialog(BuildContext context) {
+    final formKey = GlobalKey<FormState>();
+    final oldPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+    bool isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text('Change Password'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: oldPasswordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Old Password',
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your old password';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: newPasswordController,
+                      decoration: const InputDecoration(
+                        labelText: 'New Password',
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a new password';
+                        }
+                        if (value.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    TextFormField(
+                      controller: confirmPasswordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Confirm New Password',
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (value != newPasswordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          if (formKey.currentState!.validate()) {
+                            setState(() {
+                              isLoading = true;
+                            });
+                            try {
+                              await Provider.of<AuthService>(
+                                context,
+                                listen: false,
+                              ).changePassword(
+                                oldPasswordController.text,
+                                newPasswordController.text,
+                              );
+                              if (!context.mounted) return;
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Password changed successfully',
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error: ${e.toString()}'),
+                                ),
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  isLoading = false;
+                                });
+                              }
+                            }
+                          }
+                        },
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Change'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showFeedbackDialog(UserModel user) {
@@ -159,7 +293,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 onPressed: () async {
-                  await _auth.signOut();
+                  await Provider.of<AuthService>(
+                    context,
+                    listen: false,
+                  ).signOut();
                   if (context.mounted) {
                     Navigator.of(context).pop();
                   }
@@ -180,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         radius: 60,
                         backgroundColor: Theme.of(
                           context,
-                        ).colorScheme.secondary.withOpacity(0.2),
+                        ).colorScheme.secondary.withValues(alpha: 0.2),
                         backgroundImage: user.photoUrl != null
                             ? NetworkImage(user.photoUrl!)
                             : null,
@@ -250,18 +387,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Column(
                       children: [
                         ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.email_outlined,
-                            color: Colors.brown,
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           title: const Text('Email'),
                           subtitle: Text(user.email),
                         ),
                         const Divider(),
                         ListTile(
-                          leading: const Icon(
+                          leading: Icon(
                             Icons.admin_panel_settings_outlined,
-                            color: Colors.brown,
+                            color: Theme.of(context).iconTheme.color,
                           ),
                           title: const Text('Role'),
                           subtitle: Text(user.role),
@@ -270,6 +407,88 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+
+                if (user.role == 'admin') ...[
+                  const SizedBox(height: 20),
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Admin Panel',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Divider(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _buildAdminAction(
+                                  context,
+                                  Icons.post_add,
+                                  'Post',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddPostScreen(),
+                                    ),
+                                  ),
+                                ),
+                                _buildAdminAction(
+                                  context,
+                                  Icons.video_call,
+                                  'Sermon',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddSermonScreen(),
+                                    ),
+                                  ),
+                                ),
+                                _buildAdminAction(
+                                  context,
+                                  Icons.event,
+                                  'Event',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddEventScreen(),
+                                    ),
+                                  ),
+                                ),
+                                _buildAdminAction(
+                                  context,
+                                  Icons.book,
+                                  'Content',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddGlobalPostScreen(),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 20),
 
@@ -298,6 +517,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           value: themeProvider.isDarkMode,
                           onChanged: (value) {
                             themeProvider.toggleTheme(value);
+                          },
+                        ),
+                        const Divider(),
+                        ListTile(
+                          leading: const Icon(Icons.lock_reset),
+                          title: const Text('Change Password'),
+                          onTap: () {
+                            _showChangePasswordDialog(context);
                           },
                         ),
                       ],
@@ -359,6 +586,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAdminAction(
+    BuildContext context,
+    IconData icon,
+    String label,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      elevation: 2,
+      margin: EdgeInsets.only(bottom: 10),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 28,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              const SizedBox(width: 20),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

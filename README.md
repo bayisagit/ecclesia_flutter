@@ -4,13 +4,13 @@ You can copy-paste this directly into your `README.md`.
 ---
 
 ````markdown
-# ecclesia_app
+# AASTU Focus Fellowship App
 
 A Flutter-based **church mobile application** designed to help churches connect with their members digitally.
 
 ## 📱 About the App
 
-**Ecclesia App** is a mobile application built using Flutter that aims to support church communities by providing easy access to church information and services. The app can be used to share announcements, events, sermons, and other church-related resources in one place.
+**AASTU Focus App** is a mobile application built using Flutter that aims to support church communities by providing easy access to church information and services. The app can be used to share announcements, events, sermons, and other church-related resources in one place.
 
 ## ✨ Features (Planned / Available)
 
@@ -26,28 +26,31 @@ A Flutter-based **church mobile application** designed to help churches connect 
 This project is a Flutter application.
 
 ### Prerequisites
+
 - Flutter SDK
 - Android Studio or VS Code
 - Android Emulator or physical Android device
 
 ### Run the app
+
 ```bash
 flutter pub get
 flutter run
+```
 ````
 
 ## 🛠 Built With
 
-* **Flutter** – UI framework
-* **Dart** – Programming language
+- **Flutter** – UI framework
+- **Dart** – Programming language
 
 ## 📚 Resources
 
 If this is your first Flutter project, these resources can help:
 
-* [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-* [Flutter Cookbook](https://docs.flutter.dev/cookbook)
-* [Flutter Documentation](https://docs.flutter.dev/)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter Cookbook](https://docs.flutter.dev/cookbook)
+- [Flutter Documentation](https://docs.flutter.dev/)
 
 ## 🤝 Contribution
 
@@ -68,3 +71,4 @@ If you want, I can also:
 - Add **Firebase / backend info**
 - Simplify it for beginners
 
+```

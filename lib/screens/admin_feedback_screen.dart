@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../services/database_service.dart';
 
 class AdminFeedbackScreen extends StatelessWidget {
+  const AdminFeedbackScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

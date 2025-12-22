@@ -16,19 +16,29 @@ import 'home_sections/about_section.dart';
 import 'home_sections/ministries_section.dart';
 import 'home_sections/sermons_section.dart';
 import 'home_sections/events_section.dart';
+import 'home_sections/annual_verses_section.dart';
+import 'home_sections/devotional_section.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final AuthService _auth = AuthService();
   int _selectedIndex = 0;
 
   final List<Widget> _pages = [
     SingleChildScrollView(
-      child: Column(children: [HeroSection(), MinistriesSection()]),
+      child: Column(
+        children: [
+          HeroSection(),
+          AnnualVersesSection(),
+          DevotionalSection(),
+          MinistriesSection(),
+        ],
+      ),
     ),
     SingleChildScrollView(child: AboutSection()),
     SingleChildScrollView(child: SermonsSection()),
@@ -53,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _selectedIndex == 0, // Only extend for Home (Hero)
         appBar: AppBar(
           title: Text(
-            'Ecclesia',
+            'AASTU Focus',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           backgroundColor: _selectedIndex == 0 ? Colors.transparent : null,
@@ -91,7 +101,10 @@ class _HomeScreenState extends State<HomeScreen> {
           type: BottomNavigationBarType.fixed,
         ),
         floatingActionButton: FutureBuilder<UserModel?>(
-          future: AuthService().getUserDetails(user?.uid ?? ''),
+          future: Provider.of<AuthService>(
+            context,
+            listen: false,
+          ).getUserDetails(user?.uid ?? ''),
           builder: (context, snapshot) {
             if (snapshot.hasData && snapshot.data!.role == 'admin') {
               return Column(
@@ -107,9 +120,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    child: Icon(Icons.video_library),
                     backgroundColor: Theme.of(context).primaryColor,
                     tooltip: 'Add Sermon',
+                    child: Icon(Icons.video_library),
                   ),
                   SizedBox(height: 10),
                   FloatingActionButton(
@@ -122,9 +135,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    child: Icon(Icons.event),
                     backgroundColor: Theme.of(context).colorScheme.secondary,
                     tooltip: 'Add Event',
+                    child: Icon(Icons.event),
                   ),
                 ],
               );
@@ -142,23 +155,49 @@ class _HomeScreenState extends State<HomeScreen> {
         padding: EdgeInsets.zero,
         children: <Widget>[
           DrawerHeader(
-            decoration: BoxDecoration(color: Theme.of(context).primaryColor),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              image: DecorationImage(
+                image: AssetImage('assets/images/logo.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.black.withValues(alpha: 0.3),
+                  BlendMode.darken,
+                ),
+              ),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Ecclesia',
+                  'AASTU Focus',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 3.0,
+                        color: Colors.black,
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(height: 8),
                 Text(
                   user?.email ?? 'Guest',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 1),
+                        blurRadius: 3.0,
+                        color: Colors.black,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -211,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
             leading: Icon(Icons.logout),
             title: Text('Logout'),
             onTap: () async {
-              await _auth.signOut();
+              await Provider.of<AuthService>(context, listen: false).signOut();
             },
           ),
         ],

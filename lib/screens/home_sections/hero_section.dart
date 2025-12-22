@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:url_launcher/url_launcher.dart';
+import '../../screens/contact_screen.dart';
 
 class HeroSection extends StatefulWidget {
-  const HeroSection({Key? key}) : super(key: key);
+  const HeroSection({super.key});
 
   @override
-  _HeroSectionState createState() => _HeroSectionState();
+  State<HeroSection> createState() => _HeroSectionState();
 }
 
 class _HeroSectionState extends State<HeroSection> {
@@ -13,10 +15,10 @@ class _HeroSectionState extends State<HeroSection> {
   Timer? _timer;
 
   final List<String> _backgroundImages = [
-    'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1510936111840-65e151ad71bb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
-    'https://images.unsplash.com/photo-1478147427282-58a87a120781?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80',
+    'assets/images/hero_1.png',
+    'assets/images/hero_2.png',
+    'assets/images/hero_3.png',
+    'assets/images/hero_4.png',
   ];
 
   @override
@@ -34,6 +36,13 @@ class _HeroSectionState extends State<HeroSection> {
     });
   }
 
+  Future<void> _launchUrl(String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -42,7 +51,7 @@ class _HeroSectionState extends State<HeroSection> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 600,
       child: Stack(
         children: [
@@ -53,10 +62,10 @@ class _HeroSectionState extends State<HeroSection> {
               key: ValueKey<String>(_backgroundImages[_currentImageIndex]),
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(_backgroundImages[_currentImageIndex]),
+                  image: AssetImage(_backgroundImages[_currentImageIndex]),
                   fit: BoxFit.cover,
                   colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.4),
+                    Colors.black.withValues(alpha: 0.4),
                     BlendMode.darken,
                   ),
                 ),
@@ -70,8 +79,9 @@ class _HeroSectionState extends State<HeroSection> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  SizedBox(height: 100),
                   Text(
-                    'Welcome to Ecclesia',
+                    'Welcome to AASTU Focus',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
@@ -80,22 +90,25 @@ class _HeroSectionState extends State<HeroSection> {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Text(
-                    'A PLACE OF GRACE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 48,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.0,
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'TRANSFORMED\nBY\nCHRIST',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
                     ),
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'Connecting people to God and one another.',
+                    'Fostering spiritual growth, meaningful relationships, and service.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                       fontSize: 18,
                       height: 1.5,
                     ),
@@ -105,7 +118,9 @@ class _HeroSectionState extends State<HeroSection> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          _launchUrl('https://t.me/fstufocus');
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(
                             context,
@@ -129,7 +144,14 @@ class _HeroSectionState extends State<HeroSection> {
                       ),
                       SizedBox(width: 20),
                       OutlinedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ContactScreen(),
+                            ),
+                          );
+                        },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: Colors.white, width: 2),
                           padding: EdgeInsets.symmetric(

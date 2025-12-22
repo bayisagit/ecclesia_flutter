@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class FooterSection extends StatelessWidget {
   final Function(String sectionKey)? onScrollToSection;
 
-  const FooterSection({Key? key, this.onScrollToSection}) : super(key: key);
+  const FooterSection({super.key, this.onScrollToSection});
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +13,7 @@ class FooterSection extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Ecclesia',
+            'AASTU Focus',
             style: TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -23,11 +23,11 @@ class FooterSection extends StatelessWidget {
           ),
           SizedBox(height: 20),
           Text(
-            '123 Church Street, City, Country',
+            'Student Center, Room 105, AASTU',
             style: TextStyle(color: Colors.grey[500]),
           ),
           Text(
-            'Phone: (123) 456-7890  |  Email: info@ecclesia.com',
+            'Phone: +251 911 234 567  |  Email: contact@aastufocus.org',
             style: TextStyle(color: Colors.grey[500]),
           ),
           SizedBox(height: 40),
@@ -58,7 +58,7 @@ class FooterSection extends StatelessWidget {
           Divider(color: Colors.grey[800]),
           SizedBox(height: 20),
           Text(
-            '© 2025 Ecclesia Church. All Rights Reserved.',
+            '© 2025 AASTU Focus Fellowship. All Rights Reserved.',
             style: TextStyle(color: Colors.grey[600], fontSize: 12),
           ),
         ],

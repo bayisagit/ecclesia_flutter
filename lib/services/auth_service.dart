@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -9,10 +10,15 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   // Get current user stream
-  Stream<User?> get user => _auth.authStateChanges();
+  Stream<User?> get user => _auth.userChanges();
 
   // Sign Up
-  Future<UserModel?> signUp(String email, String password) async {
+  Future<UserModel?> signUp(
+    String email,
+    String password,
+    String firstName,
+    String lastName,
+  ) async {
     try {
       UserCredential result = await _auth.createUserWithEmailAndPassword(
         email: email,
@@ -21,10 +27,15 @@ class AuthService {
       User? user = result.user;
 
       if (user != null) {
+        // Send verification email
+        await user.sendEmailVerification();
+
         // Create a new user document in Firestore
         UserModel newUser = UserModel(
           uid: user.uid,
           email: email,
+          firstName: firstName,
+          lastName: lastName,
           role: 'user',
         );
         await _db.collection('users').doc(user.uid).set(newUser.toMap());
@@ -32,8 +43,8 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print(e.toString());
-      return null;
+      debugPrint(e.toString());
+      rethrow;
     }
   }
 
@@ -46,7 +57,7 @@ class AuthService {
       );
       return result.user;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -84,7 +95,7 @@ class AuthService {
       }
       return user;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
     }
   }
@@ -94,7 +105,7 @@ class AuthService {
     try {
       await _db.collection('users').doc(uid).update({'role': 'admin'});
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
     }
   }
 
@@ -113,8 +124,57 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       return null;
+    }
+  }
+
+  // Send Password Reset Email
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+    } catch (e) {
+      debugPrint(e.toString());
+      rethrow;
+    }
+  }
+
+  // Send Email Verification
+  Future<void> sendEmailVerification() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+      rethrow;
+    }
+  }
+
+  // Change Password
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    User? user = _auth.currentUser;
+    if (user == null) {
+      throw FirebaseAuthException(
+        code: 'no-user',
+        message: 'No user logged in',
+      );
+    }
+
+    final cred = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    try {
+      await user.reauthenticateWithCredential(cred);
+      await user.updatePassword(newPassword);
+    } catch (e) {
+      rethrow;
     }
   }
 }

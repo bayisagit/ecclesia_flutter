@@ -3,8 +3,10 @@ import '../services/database_service.dart';
 import 'package:intl/intl.dart';
 
 class AddSermonScreen extends StatefulWidget {
+  const AddSermonScreen({super.key});
+
   @override
-  _AddSermonScreenState createState() => _AddSermonScreenState();
+  State<AddSermonScreen> createState() => _AddSermonScreenState();
 }
 
 class _AddSermonScreenState extends State<AddSermonScreen> {
@@ -70,10 +72,11 @@ class _AddSermonScreenState extends State<AddSermonScreen> {
                         firstDate: DateTime(2000),
                         lastDate: DateTime.now(),
                       );
-                      if (picked != null && picked != date)
+                      if (picked != null && picked != date) {
                         setState(() {
                           date = picked;
                         });
+                      }
                     },
                     child: Text('Select Date'),
                   ),
@@ -100,6 +103,7 @@ class _AddSermonScreenState extends State<AddSermonScreen> {
                         imageUrl,
                         videoUrl,
                       );
+                      if (!context.mounted) return;
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Sermon added successfully!')),

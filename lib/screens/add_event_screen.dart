@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import '../services/database_service.dart';
 import 'package:intl/intl.dart';
 
 class AddEventScreen extends StatefulWidget {
+  const AddEventScreen({super.key});
+
   @override
-  _AddEventScreenState createState() => _AddEventScreenState();
+  State<AddEventScreen> createState() => _AddEventScreenState();
 }
 
 class _AddEventScreenState extends State<AddEventScreen> {
@@ -37,18 +38,8 @@ class _AddEventScreenState extends State<AddEventScreen> {
 
   Future<String> _uploadImage() async {
     if (_imageFile == null) return '';
-    try {
-      final String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      final Reference ref = FirebaseStorage.instance.ref().child(
-        'event_images/$fileName',
-      );
-      final UploadTask uploadTask = ref.putFile(_imageFile!);
-      final TaskSnapshot taskSnapshot = await uploadTask;
-      return await taskSnapshot.ref.getDownloadURL();
-    } catch (e) {
-      print('Error uploading image: $e');
-      return '';
-    }
+    return await DatabaseService().uploadImage(_imageFile!, 'event_images') ??
+        '';
   }
 
   @override
@@ -104,10 +95,11 @@ class _AddEventScreenState extends State<AddEventScreen> {
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime(2101),
                               );
-                              if (picked != null && picked != date)
+                              if (picked != null && picked != date) {
                                 setState(() {
                                   date = picked;
                                 });
+                              }
                             },
                             child: Text('Select Date'),
                           ),
@@ -136,6 +128,20 @@ class _AddEventScreenState extends State<AddEventScreen> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => _isLoading = true);
                             String imageUrl = await _uploadImage();
+
+                            if (imageUrl.isEmpty && _imageFile != null) {
+                              setState(() => _isLoading = false);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Failed to upload image. Please check your connection.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
                             await _db.addEvent(
                               title,
                               description,
@@ -145,6 +151,7 @@ class _AddEventScreenState extends State<AddEventScreen> {
                               imageUrl,
                             );
                             setState(() => _isLoading = false);
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                           }
                         },

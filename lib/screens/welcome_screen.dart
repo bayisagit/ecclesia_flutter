@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'wrapper.dart';
+import 'login_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,11 +24,11 @@ class WelcomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Spacer(flex: 2),
+                  Spacer(flex: 1),
                   // Logo
                   Center(
                     child: Container(
-                      height: 120,
+                      height: 100,
                       width: 120,
                       decoration: BoxDecoration(
                         color: Theme.of(context).cardColor,
@@ -64,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Ecclesia',
+                    'AASTU Focus',
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
                       fontSize: 24,
                       color: Colors.white70,
@@ -72,8 +74,24 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   SizedBox(height: 20),
-                  Text(
-                    'Join our community of faith. Connect, worship, and grow together in the love of Christ.',
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text:
+                              'Join our community of faith. Connect, worship, and grow together in the love of ',
+                        ),
+                        TextSpan(
+                          text: 'Christ',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(text: '.'),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: Colors.white60,
                       height: 1.5,
@@ -85,9 +103,11 @@ class WelcomeScreen extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: GestureDetector(
                       onTap: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Wrapper()),
+                          MaterialPageRoute(
+                            builder: (context) => LoginScreen(),
+                          ),
                         );
                       },
                       child: Container(
@@ -96,7 +116,7 @@ class WelcomeScreen extends StatelessWidget {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Colors.blue,
                           borderRadius: BorderRadius.circular(30),
                           boxShadow: [
                             BoxShadow(
@@ -112,13 +132,13 @@ class WelcomeScreen extends StatelessWidget {
                             Text(
                               'Continue',
                               style: TextStyle(
-                                color: Color(0xFFFF8A80),
+                                color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
                             ),
                             SizedBox(width: 10),
-                            Icon(Icons.arrow_forward, color: Color(0xFFFF8A80)),
+                            Icon(Icons.arrow_forward, color: Colors.white),
                           ],
                         ),
                       ),
@@ -139,7 +159,7 @@ class BackgroundPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
@@ -185,11 +205,11 @@ class ValleyClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     Path path = Path();
     // Start from top-left
-    path.lineTo(0, size.height * 0.55); // Start height on left
+    path.lineTo(0, size.height * 0.65); // Start height on left
 
     // Create a valley (dip) in the middle
-    var firstControlPoint = Offset(size.width / 2, size.height * 0.75);
-    var firstEndPoint = Offset(size.width, size.height * 0.55);
+    var firstControlPoint = Offset(size.width / 2, size.height * 0.85);
+    var firstEndPoint = Offset(size.width, size.height * 0.65);
 
     path.quadraticBezierTo(
       firstControlPoint.dx,

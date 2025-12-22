@@ -3,7 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'services/auth_service.dart';
-import 'screens/welcome_screen.dart';
+import 'screens/wrapper.dart';
 import 'firebase_options.dart';
 import 'providers/theme_provider.dart';
 
@@ -17,12 +17,15 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        StreamProvider<User?>.value(
-          value: AuthService().user,
+        Provider<AuthService>(create: (_) => AuthService()),
+        StreamProvider<User?>(
+          create: (context) => context.read<AuthService>().user,
           initialData: null,
         ),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
@@ -30,7 +33,7 @@ class MyApp extends StatelessWidget {
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {
           return MaterialApp(
-            title: 'Ecclesia',
+            title: 'AASTU Focus',
             themeMode: themeProvider.themeMode,
             theme: ThemeData(
               useMaterial3: true,
@@ -52,6 +55,27 @@ class MyApp extends StatelessWidget {
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
+                ),
+              ),
+              iconTheme: IconThemeData(color: Colors.black),
+              cardTheme: CardThemeData(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.black12, width: 1),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.black12),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.black12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.black, width: 2),
                 ),
               ),
               textTheme: TextTheme(
@@ -93,12 +117,33 @@ class MyApp extends StatelessWidget {
               appBarTheme: AppBarTheme(
                 backgroundColor: Color(0xFF0F172A),
                 elevation: 0,
-                iconTheme: IconThemeData(color: Colors.white),
+                iconTheme: IconThemeData(color: Colors.blueAccent),
                 titleTextStyle: TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.5,
+                ),
+              ),
+              iconTheme: IconThemeData(color: Colors.blueAccent),
+              cardTheme: CardThemeData(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(color: Colors.blueAccent, width: 1),
+                ),
+              ),
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blueAccent),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blueAccent),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.blueAccent, width: 2),
                 ),
               ),
               textTheme: TextTheme(
@@ -126,7 +171,7 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             ),
-            home: WelcomeScreen(),
+            home: Wrapper(),
             debugShowCheckedModeBanner: false,
           );
         },

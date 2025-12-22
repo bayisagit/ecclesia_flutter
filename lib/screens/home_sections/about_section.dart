@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AboutSection extends StatelessWidget {
-  const AboutSection({Key? key}) : super(key: key);
+  const AboutSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,8 +9,10 @@ class AboutSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 24.0),
       child: Column(
         children: [
+          Image.asset('assets/images/logo.png', height: 120),
+          SizedBox(height: 30),
           Text(
-            'WELCOME TO ECCLESIA',
+            'WELCOME TO AASTU FOCUS',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
@@ -20,7 +22,7 @@ class AboutSection extends StatelessWidget {
           ),
           SizedBox(height: 10),
           Text(
-            'WE ARE A CHURCH THAT BELIEVES IN JESUS',
+            'A CHRIST-CENTERED COMMUNITY',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.displayMedium?.copyWith(
               fontSize: 28,
@@ -35,7 +37,7 @@ class AboutSection extends StatelessWidget {
           ),
           SizedBox(height: 30),
           Text(
-            'Ecclesia is a place where people can meet Jesus, engage in life-giving community, and everyone is welcome. We believe in creating a space where people can have authentic encounters with Christ, discover their gifts and use them for God\'s glory.',
+            'AASTU Focus is a Christ-centered community dedicated to fostering spiritual growth, building meaningful relationships, and serving our campus and beyond. We envision a campus where students are transformed by the love of Christ.',
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodyLarge,
           ),
@@ -47,25 +49,28 @@ class AboutSection extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _buildFeature(
+                        context,
                         Icons.favorite,
-                        'Love God',
-                        'Loving God with all our heart, soul, and mind.',
+                        'Faith',
+                        'Grounding everything we do in Christ and His teachings.',
                       ),
                     ),
                     SizedBox(width: 20),
                     Expanded(
                       child: _buildFeature(
+                        context,
                         Icons.people,
-                        'Love People',
-                        'Loving our neighbors as ourselves.',
+                        'Community',
+                        'Creating a welcoming environment where authentic relationships flourish.',
                       ),
                     ),
                     SizedBox(width: 20),
                     Expanded(
                       child: _buildFeature(
+                        context,
                         Icons.public,
-                        'Serve World',
-                        'Making disciples of all nations.',
+                        'Service',
+                        'Following Christ\'s example by serving others with humility.',
                       ),
                     ),
                   ],
@@ -74,21 +79,24 @@ class AboutSection extends StatelessWidget {
                 return Column(
                   children: [
                     _buildFeature(
+                      context,
                       Icons.favorite,
-                      'Love God',
-                      'Loving God with all our heart, soul, and mind.',
+                      'Faith',
+                      'Grounding everything we do in Christ and His teachings.',
                     ),
-                    SizedBox(height: 30),
+                    SizedBox(height: 20),
                     _buildFeature(
+                      context,
                       Icons.people,
-                      'Love People',
-                      'Loving our neighbors as ourselves.',
+                      'Community',
+                      'Creating a welcoming environment where authentic relationships flourish.',
                     ),
-                    SizedBox(height: 30),
+                    SizedBox(height: 20),
                     _buildFeature(
+                      context,
                       Icons.public,
-                      'Serve World',
-                      'Making disciples of all nations.',
+                      'Service',
+                      'Following Christ\'s example by serving others with humility.',
                     ),
                   ],
                 );
@@ -100,22 +108,64 @@ class AboutSection extends StatelessWidget {
     );
   }
 
-  Widget _buildFeature(IconData icon, String title, String description) {
-    return Column(
-      children: [
-        Icon(icon, size: 40, color: Color(0xFFE53935)),
-        SizedBox(height: 15),
-        Text(
-          title,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildFeature(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String description,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? Colors.blueAccent : Colors.black12,
+          width: 1.5,
         ),
-        SizedBox(height: 10),
-        Text(
-          description,
-          textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-      ],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.secondary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              icon,
+              size: 40,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+          ),
+          SizedBox(height: 20),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).textTheme.titleLarge?.color,
+            ),
+          ),
+          SizedBox(height: 12),
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
     );
   }
 }

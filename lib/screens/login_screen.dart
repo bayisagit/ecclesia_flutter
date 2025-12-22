@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
+import '../widgets/auth_header.dart';
 import 'signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
 
   String email = '';
   String password = '';
   String error = '';
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -21,64 +26,7 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: Theme.of(context).colorScheme.secondary,
       body: Column(
         children: [
-          // Header Section
-          Container(
-            height: 250,
-            width: double.infinity,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -50,
-                  right: -50,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 40),
-                      Container(
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: EdgeInsets.all(15),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.church,
-                              size: 40,
-                              color: Theme.of(context).colorScheme.secondary,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        'Sign In',
-                        style: Theme.of(context).textTheme.displayMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          AuthHeader(title: 'Sign In'),
           // Form Section
           Expanded(
             child: Container(
@@ -163,14 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          child: Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(
                               context,
@@ -180,20 +120,50 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             elevation: 2,
                           ),
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              dynamic result = await _auth.signIn(
-                                email,
-                                password,
-                              );
-                              if (result == null) {
-                                setState(
-                                  () => error =
-                                      'Could not sign in with those credentials',
-                                );
-                              }
-                            }
-                          },
+                          onPressed: loading
+                              ? null
+                              : () async {
+                                  if (_formKey.currentState!.validate()) {
+                                    setState(() => loading = true);
+                                    final auth = Provider.of<AuthService>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    dynamic result = await auth.signIn(
+                                      email,
+                                      password,
+                                    );
+                                    if (!context.mounted) return;
+                                    if (result == null) {
+                                      setState(() {
+                                        error =
+                                            'Could not sign in with those credentials';
+                                        loading = false;
+                                      });
+                                    } else {
+                                      Navigator.of(
+                                        context,
+                                      ).popUntil((route) => route.isFirst);
+                                    }
+                                  }
+                                },
+                          child: loading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Login',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                       SizedBox(height: 12.0),
@@ -211,9 +181,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         height: 50,
                         child: ElevatedButton.icon(
                           icon: Icon(
-                            Icons.g_mobiledata,
+                            FontAwesomeIcons.google,
                             color: Colors.white,
-                            size: 30,
+                            size: 24,
                           ),
                           label: Text(
                             'Google',
@@ -230,14 +200,28 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             elevation: 2,
                           ),
-                          onPressed: () async {
-                            dynamic result = await _auth.signInWithGoogle();
-                            if (result == null) {
-                              setState(
-                                () => error = 'Could not sign in with Google',
-                              );
-                            }
-                          },
+                          onPressed: loading
+                              ? null
+                              : () async {
+                                  setState(() => loading = true);
+                                  final auth = Provider.of<AuthService>(
+                                    context,
+                                    listen: false,
+                                  );
+                                  dynamic result = await auth
+                                      .signInWithGoogle();
+                                  if (!context.mounted) return;
+                                  if (result == null) {
+                                    setState(() {
+                                      error = 'Could not sign in with Google';
+                                      loading = false;
+                                    });
+                                  } else {
+                                    Navigator.of(
+                                      context,
+                                    ).popUntil((route) => route.isFirst);
+                                  }
+                                },
                         ),
                       ),
                       SizedBox(height: 30),

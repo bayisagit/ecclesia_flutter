@@ -1,19 +1,63 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+// ignore: depend_on_referenced_packages
+import 'package:cloudinary_public/cloudinary_public.dart';
 import '../models/event_model.dart';
 import '../models/sermon_model.dart';
 import '../models/user_model.dart';
+import '../models/ministry_post_model.dart';
+import '../models/comment_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Get Events Stream
-  Stream<List<EventModel>> get events {
-    return _db.collection('events').orderBy('date').snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
-    });
+  final CloudinaryPublic _cloudinary = CloudinaryPublic(
+    'doz1fanub',
+    'aastufocus',
+    cache: false,
+  );
+
+  // Get Ministry Posts Stream
+  Stream<List<MinistryPostModel>> getMinistryPosts(String ministryName) {
+    return _db
+        .collection('ministry_posts')
+        .where('ministryName', isEqualTo: ministryName)
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => MinistryPostModel.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  // Get Annual Verses Stream
+  Stream<List<MinistryPostModel>> getAnnualVerses() {
+    return _db
+        .collection('ministry_posts')
+        .where('type', isEqualTo: 'annual_verse')
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => MinistryPostModel.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  // Get Devotional Posts Stream
+  Stream<List<MinistryPostModel>> getDevotionalPosts() {
+    return _db
+        .collection('ministry_posts')
+        .where('type', isEqualTo: 'devotional')
+        .orderBy('date', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => MinistryPostModel.fromFirestore(doc))
+              .toList();
+        });
   }
 
   // Get Sermons Stream
@@ -27,6 +71,28 @@ class DatabaseService {
               .map((doc) => SermonModel.fromFirestore(doc))
               .toList();
         });
+  }
+
+  // Delete Sermon (Admin only)
+  Future<void> deleteSermon(String sermonId) async {
+    await _db.collection('sermons').doc(sermonId).delete();
+  }
+
+  // Get Events Stream
+  Stream<List<EventModel>> get events {
+    return _db.collection('events').orderBy('date').snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) => EventModel.fromFirestore(doc)).toList();
+    });
+  }
+
+  // Add Ministry Post (Admin only)
+  Future<void> addMinistryPost(MinistryPostModel post) async {
+    await _db.collection('ministry_posts').add(post.toMap());
+  }
+
+  // Delete Ministry Post (Admin only)
+  Future<void> deleteMinistryPost(String postId) async {
+    await _db.collection('ministry_posts').doc(postId).delete();
   }
 
   // Add Event (Admin only)
@@ -175,11 +241,34 @@ class DatabaseService {
   // Upload Profile Image
   Future<String?> uploadProfileImage(File imageFile, String uid) async {
     try {
-      final ref = _storage.ref().child('profile_images/$uid.jpg');
-      await ref.putFile(imageFile);
-      return await ref.getDownloadURL();
+      CloudinaryResponse response = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          imageFile.path,
+          resourceType: CloudinaryResourceType.Image,
+          folder: 'profile_images',
+          publicId: '${uid}_${DateTime.now().millisecondsSinceEpoch}',
+        ),
+      );
+      return response.secureUrl;
     } catch (e) {
-      print(e.toString());
+      debugPrint('Cloudinary Upload Error: $e');
+      return null;
+    }
+  }
+
+  // Upload General Image
+  Future<String?> uploadImage(File imageFile, String folderName) async {
+    try {
+      CloudinaryResponse response = await _cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          imageFile.path,
+          resourceType: CloudinaryResourceType.Image,
+          folder: folderName,
+        ),
+      );
+      return response.secureUrl;
+    } catch (e) {
+      debugPrint('Cloudinary Upload Error: $e');
       return null;
     }
   }
@@ -198,6 +287,58 @@ class DatabaseService {
         // Return a default user model or handle empty doc
         return UserModel(uid: uid, email: '', role: 'user');
       }
+    });
+  }
+
+  // Toggle Like on Ministry Post
+  Future<void> toggleLike(String postId, String userId, bool isLiked) async {
+    final docRef = _db.collection('ministry_posts').doc(postId);
+
+    if (isLiked) {
+      // Unlike
+      await docRef.update({
+        'likes': FieldValue.increment(-1),
+        'likedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      // Like
+      await docRef.update({
+        'likes': FieldValue.increment(1),
+        'likedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // Increment View Count
+  Future<void> incrementView(String postId) async {
+    await _db.collection('ministry_posts').doc(postId).update({
+      'views': FieldValue.increment(1),
+    });
+  }
+
+  // Get Comments Stream
+  Stream<List<CommentModel>> getComments(String postId) {
+    return _db
+        .collection('ministry_posts')
+        .doc(postId)
+        .collection('comments')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => CommentModel.fromFirestore(doc))
+              .toList();
+        });
+  }
+
+  // Add Comment
+  Future<void> addComment(String postId, CommentModel comment) async {
+    final postRef = _db.collection('ministry_posts').doc(postId);
+    final commentRef = postRef.collection('comments').doc();
+
+    await _db.runTransaction((transaction) async {
+      transaction.set(commentRef, comment.toMap());
+      transaction.update(postRef, {'commentCount': FieldValue.increment(1)});
     });
   }
 }

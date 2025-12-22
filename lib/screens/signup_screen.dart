@@ -1,18 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../services/auth_service.dart';
+import '../widgets/auth_header.dart';
 
 class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
+
   @override
-  _SignUpScreenState createState() => _SignUpScreenState();
+  State<SignUpScreen> createState() => _SignUpScreenState();
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
-  final AuthService _auth = AuthService();
   final _formKey = GlobalKey<FormState>();
 
+  String firstName = '';
+  String lastName = '';
   String email = '';
   String password = '';
   String error = '';
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -20,73 +28,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       backgroundColor: Theme.of(context).colorScheme.secondary,
       body: Column(
         children: [
-          // Header Section
-          Container(
-            height: 250,
-            width: double.infinity,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: -50,
-                  right: -50,
-                  child: Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                ),
-                // Back Button
-                Positioned(
-                  top: 40,
-                  left: 20,
-                  child: IconButton(
-                    icon: Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(height: 40),
-                      Container(
-                        height: 80,
-                        width: 80,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          shape: BoxShape.circle,
-                        ),
-                        padding: EdgeInsets.all(15),
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Icon(
-                              Icons.church,
-                              size: 40,
-                              color: Theme.of(context).colorScheme.secondary,
-                            );
-                          },
-                        ),
-                      ),
-                      SizedBox(height: 20),
-                      Text(
-                        'Sign Up',
-                        style: Theme.of(context).textTheme.displayMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          AuthHeader(title: 'Sign Up', showBackButton: true),
           // Form Section
           Expanded(
             child: Container(
@@ -104,6 +46,72 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'First Name',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 10),
+                                TextFormField(
+                                  decoration: InputDecoration(
+                                    hintText: 'John',
+                                    filled: true,
+                                    fillColor: Theme.of(context).cardColor,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    prefixIcon: Icon(Icons.person_outline),
+                                  ),
+                                  validator: (val) =>
+                                      val!.isEmpty ? 'Enter first name' : null,
+                                  onChanged: (val) {
+                                    setState(() => firstName = val);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Last Name',
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                                SizedBox(height: 10),
+                                TextFormField(
+                                  decoration: InputDecoration(
+                                    hintText: 'Doe',
+                                    filled: true,
+                                    fillColor: Theme.of(context).cardColor,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    prefixIcon: Icon(Icons.person_outline),
+                                  ),
+                                  validator: (val) =>
+                                      val!.isEmpty ? 'Enter last name' : null,
+                                  onChanged: (val) {
+                                    setState(() => lastName = val);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 20.0),
                       Text(
                         'Email',
                         style: Theme.of(context).textTheme.titleMedium
@@ -121,8 +129,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
-                        validator: (val) =>
-                            val!.isEmpty ? 'Enter an email' : null,
+                        validator: (val) {
+                          if (val == null || val.isEmpty) {
+                            return 'Enter an email';
+                          }
+                          final emailRegex = RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          );
+                          if (!emailRegex.hasMatch(val)) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
                         onChanged: (val) {
                           setState(() => email = val);
                         },
@@ -158,14 +176,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          child: Text(
-                            'Register',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(
                               context,
@@ -175,21 +185,57 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             elevation: 2,
                           ),
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              dynamic result = await _auth.signUp(
-                                email,
-                                password,
-                              );
-                              if (result == null) {
-                                setState(
-                                  () => error = 'Please supply a valid email',
-                                );
-                              } else {
-                                Navigator.pop(context);
-                              }
-                            }
-                          },
+                          onPressed: loading
+                              ? null
+                              : () async {
+                                  if (_formKey.currentState!.validate()) {
+                                    setState(() => loading = true);
+                                    final auth = Provider.of<AuthService>(
+                                      context,
+                                      listen: false,
+                                    );
+                                    try {
+                                      await auth.signUp(
+                                        email,
+                                        password,
+                                        firstName,
+                                        lastName,
+                                      );
+                                      if (!context.mounted) return;
+                                      Navigator.of(
+                                        context,
+                                      ).popUntil((route) => route.isFirst);
+                                    } catch (e) {
+                                      if (!context.mounted) return;
+                                      setState(() {
+                                        loading = false;
+                                        if (e is FirebaseAuthException) {
+                                          error =
+                                              e.message ?? 'An error occurred';
+                                        } else {
+                                          error = e.toString();
+                                        }
+                                      });
+                                    }
+                                  }
+                                },
+                          child: loading
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  'Register',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
                         ),
                       ),
                       SizedBox(height: 12.0),
@@ -207,9 +253,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         height: 50,
                         child: ElevatedButton.icon(
                           icon: Icon(
-                            Icons.g_mobiledata,
+                            FontAwesomeIcons.google,
                             color: Colors.white,
-                            size: 30,
+                            size: 24,
                           ),
                           label: Text(
                             'Google',
@@ -227,13 +273,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             elevation: 2,
                           ),
                           onPressed: () async {
-                            dynamic result = await _auth.signInWithGoogle();
+                            final auth = Provider.of<AuthService>(
+                              context,
+                              listen: false,
+                            );
+                            dynamic result = await auth.signInWithGoogle();
+                            if (!context.mounted) return;
                             if (result == null) {
                               setState(
                                 () => error = 'Could not sign up with Google',
                               );
                             } else {
-                              Navigator.pop(context);
+                              Navigator.of(
+                                context,
+                              ).popUntil((route) => route.isFirst);
                             }
                           },
                         ),

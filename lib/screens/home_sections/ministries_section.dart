@@ -1,7 +1,21 @@
 import 'package:flutter/material.dart';
+import '../ministry_details_screen.dart';
 
 class MinistriesSection extends StatelessWidget {
-  const MinistriesSection({Key? key}) : super(key: key);
+  const MinistriesSection({super.key});
+
+  final List<Map<String, String>> _ministries = const [
+    {'title': 'Worship Team', 'image': 'assets/images/worship_team.png'},
+    {'title': 'Prayer Team', 'image': 'assets/images/prayer_team.png'},
+    {'title': 'Outreach Team', 'image': 'assets/images/outreach_team.png'},
+    {
+      'title': 'Bible Study Team',
+      'image': 'assets/images/bible_study_team.png',
+    },
+    {'title': 'Welcome Team', 'image': 'assets/images/welcome_team.png'},
+    {'title': 'Media Team', 'image': 'assets/images/media_team.png'},
+    {'title': 'Ebenezer Team', 'image': 'assets/images/ebenezer_team.png'},
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -20,71 +34,75 @@ class MinistriesSection extends StatelessWidget {
           ),
           SizedBox(height: 10),
           Text(
-            'Something for everyone',
+            'Serve and be served',
             style: Theme.of(
               context,
             ).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
           ),
           SizedBox(height: 40),
-          Container(
-            height: 300,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildMinistryCard(
-                  'Kids Ministry',
-                  'https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-                ),
-                _buildMinistryCard(
-                  'Youth Group',
-                  'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-                ),
-                _buildMinistryCard(
-                  'Worship Team',
-                  'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-                ),
-                _buildMinistryCard(
-                  'Outreach',
-                  'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60',
-                ),
-              ],
-            ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: NeverScrollableScrollPhysics(),
+            itemCount: _ministries.length,
+            separatorBuilder: (context, index) => SizedBox(height: 20),
+            itemBuilder: (context, index) {
+              return _buildMinistryCard(
+                context,
+                _ministries[index]['title']!,
+                _ministries[index]['image']!,
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMinistryCard(String title, String imageUrl) {
-    return Container(
-      width: 250,
-      margin: EdgeInsets.only(right: 20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(15),
-        image: DecorationImage(
-          image: NetworkImage(imageUrl),
-          fit: BoxFit.cover,
-        ),
-      ),
+  Widget _buildMinistryCard(
+    BuildContext context,
+    String title,
+    String imageUrl,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                MinistryDetailsScreen(ministryName: title, imageUrl: imageUrl),
+          ),
+        );
+      },
       child: Container(
+        width: double.infinity,
+        height: 200,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(15),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
+          image: DecorationImage(
+            image: AssetImage(imageUrl),
+            fit: BoxFit.cover,
           ),
         ),
-        child: Align(
-          alignment: Alignment.bottomLeft,
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Text(
-              title,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.8)],
+            ),
+          ),
+          child: Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ),
