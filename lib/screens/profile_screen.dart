@@ -10,6 +10,7 @@ import '../providers/theme_provider.dart';
 import 'admin_feedback_screen.dart';
 import 'admin/add_post_screen.dart';
 import 'admin/add_global_post_screen.dart';
+import 'admin/admin_users_screen.dart';
 import 'add_sermon_screen.dart';
 import 'add_event_screen.dart';
 
@@ -293,12 +294,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 onPressed: () async {
-                  await Provider.of<AuthService>(
+                  final authService = Provider.of<AuthService>(
                     context,
                     listen: false,
-                  ).signOut();
-                  if (context.mounted) {
-                    Navigator.of(context).pop();
+                  );
+                  bool confirm =
+                      await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Logout'),
+                          content: const Text(
+                            'Are you sure you want to logout?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Logout'),
+                            ),
+                          ],
+                        ),
+                      ) ??
+                      false;
+
+                  if (confirm) {
+                    await authService.signOut();
+                    if (context.mounted) {
+                      Navigator.of(context).popUntil((route) => route.isFirst);
+                    }
                   }
                 },
               ),
@@ -363,7 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'User Profile',
+                  'Member Profile',
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -401,7 +427,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: Theme.of(context).iconTheme.color,
                           ),
                           title: const Text('Role'),
-                          subtitle: Text(user.role),
+                          subtitle: Text(
+                            user.role == 'user'
+                                ? 'Member'
+                                : user.role[0].toUpperCase() +
+                                      user.role.substring(1),
+                          ),
                         ),
                       ],
                     ),
@@ -466,6 +497,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     MaterialPageRoute(
                                       builder: (context) =>
                                           const AddEventScreen(),
+                                    ),
+                                  ),
+                                ),
+                                _buildAdminAction(
+                                  context,
+                                  Icons.people,
+                                  'Manage Members',
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AdminUsersScreen(),
                                     ),
                                   ),
                                 ),
@@ -562,7 +605,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const Divider(),
                           ListTile(
                             leading: const Icon(Icons.admin_panel_settings),
-                            title: const Text('View User Feedback'),
+                            title: const Text('View Member Feedback'),
                             trailing: const Icon(
                               Icons.arrow_forward_ios,
                               size: 16,

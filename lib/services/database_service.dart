@@ -112,7 +112,90 @@ class DatabaseService {
       'createdBy': uid,
       'imageUrl': imageUrl,
       'createdAt': FieldValue.serverTimestamp(),
+      'likes': [],
+      'interested': [],
+      'going': [],
     });
+  }
+
+  // Toggle Event Reaction
+  Future<void> toggleEventReaction(
+    String eventId,
+    String userId,
+    String reactionType,
+  ) async {
+    final docRef = _db.collection('events').doc(eventId);
+    final doc = await docRef.get();
+    if (!doc.exists) return;
+
+    final data = doc.data() as Map<String, dynamic>;
+    final List<dynamic> currentReactions = data[reactionType] ?? [];
+
+    if (currentReactions.contains(userId)) {
+      await docRef.update({
+        reactionType: FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      await docRef.update({
+        reactionType: FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
+  // Update Last Viewed
+  Future<void> updateLastViewed(
+    String uid,
+    String category, {
+    String? ministryName,
+  }) async {
+    final docRef = _db.collection('users').doc(uid);
+    if (category == 'ministries' && ministryName != null) {
+      await docRef.update({
+        'lastViewedMinistries.$ministryName': FieldValue.serverTimestamp(),
+      });
+    } else if (category == 'sermons') {
+      await docRef.update({'lastViewedSermons': FieldValue.serverTimestamp()});
+    } else if (category == 'events') {
+      await docRef.update({'lastViewedEvents': FieldValue.serverTimestamp()});
+    }
+  }
+
+  // Get Unseen Ministry Posts Count
+  Stream<int> getUnseenMinistryPostsCount(
+    String ministryName,
+    DateTime? lastViewed,
+  ) {
+    Query query = _db
+        .collection('ministry_posts')
+        .where('ministryName', isEqualTo: ministryName);
+
+    if (lastViewed != null) {
+      query = query.where('date', isGreaterThan: lastViewed);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs.length);
+  }
+
+  // Get Unseen Sermons Count
+  Stream<int> getUnseenSermonsCount(DateTime? lastViewed) {
+    Query query = _db.collection('sermons');
+
+    if (lastViewed != null) {
+      query = query.where('date', isGreaterThan: lastViewed);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs.length);
+  }
+
+  // Get Unseen Events Count
+  Stream<int> getUnseenEventsCount(DateTime? lastViewed) {
+    Query query = _db.collection('events');
+
+    if (lastViewed != null) {
+      query = query.where('date', isGreaterThan: lastViewed);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs.length);
   }
 
   // Add Sermon (Admin only)
@@ -339,6 +422,32 @@ class DatabaseService {
     await _db.runTransaction((transaction) async {
       transaction.set(commentRef, comment.toMap());
       transaction.update(postRef, {'commentCount': FieldValue.increment(1)});
+    });
+  }
+
+  // Get All Users (Admin only)
+  Stream<List<UserModel>> get users {
+    return _db.collection('users').snapshots().map((snapshot) {
+      return snapshot.docs
+          .map((doc) => UserModel.fromMap(doc.data(), doc.id))
+          .toList();
+    });
+  }
+
+  // Delete User (Admin only)
+  Future<void> deleteUser(String uid) async {
+    await _db.collection('users').doc(uid).delete();
+  }
+
+  // Update User Role (Admin only)
+  Future<void> updateUserRole(String uid, String newRole) async {
+    await _db.collection('users').doc(uid).update({'role': newRole});
+  }
+
+  // Update Last Seen Post Date
+  Future<void> updateLastSeenPostDate(String uid) async {
+    await _db.collection('users').doc(uid).update({
+      'lastSeenPostDate': FieldValue.serverTimestamp(),
     });
   }
 }

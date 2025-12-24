@@ -29,6 +29,48 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForNewPosts();
+    });
+  }
+
+  Future<void> _checkForNewPosts() async {
+    final user = Provider.of<User?>(context, listen: false);
+    if (user == null) return;
+
+    final db = DatabaseService();
+    // Get user data to check lastSeenPostDate
+    final userDataStream = db.getUserData(user.uid);
+    final userData = await userDataStream.first;
+
+    // Get latest devotional post
+    final postsStream = db.getDevotionalPosts();
+    final posts = await postsStream.first;
+
+    if (posts.isNotEmpty) {
+      final latestPost = posts.first;
+      if (userData.lastSeenPostDate == null ||
+          latestPost.date.isAfter(userData.lastSeenPostDate!)) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('New posts available!'),
+            action: SnackBarAction(
+              label: 'Mark as Seen',
+              onPressed: () {
+                db.updateLastSeenPostDate(user.uid);
+              },
+            ),
+            duration: const Duration(seconds: 10),
+          ),
+        );
+      }
+    }
+  }
+
   final List<Widget> _pages = [
     SingleChildScrollView(
       child: Column(
@@ -46,9 +88,55 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   void _onItemTapped(int index) {
+    final user = Provider.of<User?>(context, listen: false);
+    if (user != null) {
+      if (index == 2) {
+        // Sermons
+        DatabaseService().updateLastViewed(user.uid, 'sermons');
+      } else if (index == 3) {
+        // Events
+        DatabaseService().updateLastViewed(user.uid, 'events');
+      }
+    }
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  Widget _buildBadgeIcon(
+    BuildContext context,
+    IconData icon,
+    Stream<int> countStream,
+  ) {
+    return StreamBuilder<int>(
+      stream: countStream,
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        return Stack(
+          children: [
+            Icon(icon),
+            if (count > 0)
+              Positioned(
+                right: 0,
+                top: 0,
+                child: Container(
+                  padding: EdgeInsets.all(1),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  constraints: BoxConstraints(minWidth: 12, minHeight: 12),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(color: Colors.white, fontSize: 8),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -58,93 +146,125 @@ class _HomeScreenState extends State<HomeScreen> {
     return StreamProvider<List<EventModel>>.value(
       value: DatabaseService().events,
       initialData: [],
-      child: Scaffold(
-        extendBodyBehindAppBar:
-            _selectedIndex == 0, // Only extend for Home (Hero)
-        appBar: AppBar(
-          title: Text(
-            'AASTU Focus',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          backgroundColor: _selectedIndex == 0 ? Colors.transparent : null,
-          elevation: 0,
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(
-                Icons.person,
-                color: _selectedIndex == 0
-                    ? Colors.white
-                    : Theme.of(context).iconTheme.color,
+      child: StreamBuilder<UserModel>(
+        stream: user != null
+            ? DatabaseService().getUserData(user.uid)
+            : Stream.value(UserModel(uid: '', email: '', role: 'user')),
+        builder: (context, userSnapshot) {
+          final userModel = userSnapshot.data;
+
+          return Scaffold(
+            extendBodyBehindAppBar:
+                _selectedIndex == 0, // Only extend for Home (Hero)
+            appBar: AppBar(
+              title: Text(
+                'AASTU Focus',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
-                );
+              backgroundColor: _selectedIndex == 0 ? Colors.transparent : null,
+              elevation: 0,
+              actions: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    Icons.person,
+                    color: _selectedIndex == 0
+                        ? Colors.white
+                        : Theme.of(context).iconTheme.color,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ProfileScreen()),
+                    );
+                  },
+                ),
+              ],
+            ),
+            drawer: _buildDrawer(context, user),
+            body: _pages[_selectedIndex],
+            bottomNavigationBar: BottomNavigationBar(
+              items: <BottomNavigationBarItem>[
+                BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.info),
+                  label: 'About Us',
+                ),
+                BottomNavigationBarItem(
+                  icon: _buildBadgeIcon(
+                    context,
+                    Icons.mic,
+                    DatabaseService().getUnseenSermonsCount(
+                      userModel?.lastViewedSermons,
+                    ),
+                  ),
+                  label: 'Sermons',
+                ),
+                BottomNavigationBarItem(
+                  icon: _buildBadgeIcon(
+                    context,
+                    Icons.event,
+                    DatabaseService().getUnseenEventsCount(
+                      userModel?.lastViewedEvents,
+                    ),
+                  ),
+                  label: 'Events',
+                ),
+              ],
+              currentIndex: _selectedIndex,
+              selectedItemColor: Theme.of(context).colorScheme.secondary,
+              unselectedItemColor: Colors.grey,
+              onTap: _onItemTapped,
+              type: BottomNavigationBarType.fixed,
+            ),
+            floatingActionButton: FutureBuilder<UserModel?>(
+              future: Provider.of<AuthService>(
+                context,
+                listen: false,
+              ).getUserDetails(user?.uid ?? ''),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data!.role == 'admin') {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FloatingActionButton(
+                        heroTag: 'addSermon',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddSermonScreen(),
+                            ),
+                          );
+                        },
+                        backgroundColor: Theme.of(context).primaryColor,
+                        tooltip: 'Add Sermon',
+                        child: Icon(Icons.video_library),
+                      ),
+                      SizedBox(height: 10),
+                      FloatingActionButton(
+                        heroTag: 'addEvent',
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AddEventScreen(),
+                            ),
+                          );
+                        },
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.secondary,
+                        tooltip: 'Add Event',
+                        child: Icon(Icons.event),
+                      ),
+                    ],
+                  );
+                }
+                return Container();
               },
             ),
-          ],
-        ),
-        drawer: _buildDrawer(context, user),
-        body: _pages[_selectedIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.info), label: 'About Us'),
-            BottomNavigationBarItem(icon: Icon(Icons.mic), label: 'Sermons'),
-            BottomNavigationBarItem(icon: Icon(Icons.event), label: 'Events'),
-          ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Theme.of(context).colorScheme.secondary,
-          unselectedItemColor: Colors.grey,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-        ),
-        floatingActionButton: FutureBuilder<UserModel?>(
-          future: Provider.of<AuthService>(
-            context,
-            listen: false,
-          ).getUserDetails(user?.uid ?? ''),
-          builder: (context, snapshot) {
-            if (snapshot.hasData && snapshot.data!.role == 'admin') {
-              return Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FloatingActionButton(
-                    heroTag: 'addSermon',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddSermonScreen(),
-                        ),
-                      );
-                    },
-                    backgroundColor: Theme.of(context).primaryColor,
-                    tooltip: 'Add Sermon',
-                    child: Icon(Icons.video_library),
-                  ),
-                  SizedBox(height: 10),
-                  FloatingActionButton(
-                    heroTag: 'addEvent',
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddEventScreen(),
-                        ),
-                      );
-                    },
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
-                    tooltip: 'Add Event',
-                    child: Icon(Icons.event),
-                  ),
-                ],
-              );
-            }
-            return Container();
-          },
-        ),
+          );
+        },
       ),
     );
   }
@@ -250,7 +370,32 @@ class _HomeScreenState extends State<HomeScreen> {
             leading: Icon(Icons.logout),
             title: Text('Logout'),
             onTap: () async {
-              await Provider.of<AuthService>(context, listen: false).signOut();
+              bool confirm =
+                  await showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('Logout'),
+                        ),
+                      ],
+                    ),
+                  ) ??
+                  false;
+
+              if (confirm) {
+                await Provider.of<AuthService>(
+                  context,
+                  listen: false,
+                ).signOut();
+              }
             },
           ),
         ],

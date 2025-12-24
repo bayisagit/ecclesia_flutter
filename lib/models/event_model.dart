@@ -8,6 +8,9 @@ class EventModel {
   final String location;
   final String createdBy;
   final String imageUrl;
+  final List<String> likes;
+  final List<String> interested;
+  final List<String> going;
 
   EventModel({
     required this.id,
@@ -17,6 +20,9 @@ class EventModel {
     required this.location,
     required this.createdBy,
     this.imageUrl = '',
+    this.likes = const [],
+    this.interested = const [],
+    this.going = const [],
   });
 
   // Create an EventModel from a Firestore Document
@@ -31,6 +37,9 @@ class EventModel {
       location: data['location'] ?? '',
       createdBy: data['createdBy'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
+      likes: List<String>.from(data['likes'] ?? []),
+      interested: List<String>.from(data['interested'] ?? []),
+      going: List<String>.from(data['going'] ?? []),
     );
   }
 
@@ -43,6 +52,9 @@ class EventModel {
       'location': location,
       'createdBy': createdBy,
       'imageUrl': imageUrl,
+      'likes': likes,
+      'interested': interested,
+      'going': going,
     };
   }
 }

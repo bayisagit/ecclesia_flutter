@@ -83,25 +83,41 @@ class _AddEventScreenState extends State<AddEventScreen> {
                       SizedBox(height: 20.0),
                       Row(
                         children: [
-                          Text(
-                            'Date: ${DateFormat('yyyy-MM-dd').format(date)}',
+                          Expanded(
+                            child: Text(
+                              'Date: ${DateFormat('yyyy-MM-dd HH:mm').format(date)}',
+                            ),
                           ),
-                          SizedBox(width: 20.0),
+                          SizedBox(width: 10.0),
                           ElevatedButton(
                             onPressed: () async {
-                              final DateTime? picked = await showDatePicker(
+                              final DateTime? pickedDate = await showDatePicker(
                                 context: context,
                                 initialDate: date,
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime(2101),
                               );
-                              if (picked != null && picked != date) {
-                                setState(() {
-                                  date = picked;
-                                });
+                              if (pickedDate != null) {
+                                if (!context.mounted) return;
+                                final TimeOfDay? pickedTime =
+                                    await showTimePicker(
+                                      context: context,
+                                      initialTime: TimeOfDay.fromDateTime(date),
+                                    );
+                                if (pickedTime != null) {
+                                  setState(() {
+                                    date = DateTime(
+                                      pickedDate.year,
+                                      pickedDate.month,
+                                      pickedDate.day,
+                                      pickedTime.hour,
+                                      pickedTime.minute,
+                                    );
+                                  });
+                                }
                               }
                             },
-                            child: Text('Select Date'),
+                            child: Text('Select Date & Time'),
                           ),
                         ],
                       ),

@@ -12,8 +12,9 @@ class AdminFeedbackScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('User Feedback'),
+        title: Text('User Feedback', style: TextStyle(color: Colors.white)),
         backgroundColor: Theme.of(context).primaryColor,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: DatabaseService().feedbackStream,

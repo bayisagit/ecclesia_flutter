@@ -20,10 +20,19 @@ class _EventsSectionState extends State<EventsSection> {
   @override
   Widget build(BuildContext context) {
     final events = Provider.of<List<EventModel>>(context);
+    final user = Provider.of<User?>(context);
 
-    // Sort events by date (soonest first)
-    final sortedEvents = List<EventModel>.from(events);
-    sortedEvents.sort((a, b) => a.date.compareTo(b.date));
+    // Sort events: Upcoming first (ascending), then Past (descending)
+    final now = DateTime.now();
+    final upcoming = events.where((e) => e.date.isAfter(now)).toList();
+    final past = events
+        .where((e) => e.date.isBefore(now) || e.date.isAtSameMomentAs(now))
+        .toList();
+
+    upcoming.sort((a, b) => a.date.compareTo(b.date));
+    past.sort((a, b) => b.date.compareTo(a.date));
+
+    final sortedEvents = [...upcoming, ...past];
 
     final displayedEvents = _showAll
         ? sortedEvents
@@ -75,6 +84,7 @@ class _EventsSectionState extends State<EventsSection> {
                           context,
                           displayedEvents[index],
                           isAdmin,
+                          user?.uid,
                         );
                       },
                     ),
@@ -105,7 +115,12 @@ class _EventsSectionState extends State<EventsSection> {
     );
   }
 
-  Widget _buildEventCard(BuildContext context, EventModel event, bool isAdmin) {
+  Widget _buildEventCard(
+    BuildContext context,
+    EventModel event,
+    bool isAdmin,
+    String? uid,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final borderColor = isDark ? Colors.blueAccent : Colors.black12;
 
@@ -293,6 +308,39 @@ class _EventsSectionState extends State<EventsSection> {
                   ],
                 ),
                 SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildReactionButton(
+                      context,
+                      'Like',
+                      Icons.thumb_up,
+                      event.likes,
+                      'likes',
+                      event.id,
+                      uid,
+                    ),
+                    _buildReactionButton(
+                      context,
+                      'Interested',
+                      Icons.star,
+                      event.interested,
+                      'interested',
+                      event.id,
+                      uid,
+                    ),
+                    _buildReactionButton(
+                      context,
+                      'Going',
+                      Icons.check_circle,
+                      event.going,
+                      'going',
+                      event.id,
+                      uid,
+                    ),
+                  ],
+                ),
+                SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
@@ -322,6 +370,35 @@ class _EventsSectionState extends State<EventsSection> {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReactionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    List<String> users,
+    String type,
+    String eventId,
+    String? uid,
+  ) {
+    final isSelected = uid != null && users.contains(uid);
+    final color = isSelected ? Colors.blue : Colors.grey;
+
+    return InkWell(
+      onTap: uid == null
+          ? null
+          : () {
+              DatabaseService().toggleEventReaction(eventId, uid, type);
+            },
+      child: Column(
+        children: [
+          Icon(icon, color: color),
+          SizedBox(height: 4),
+          Text('${users.length}', style: TextStyle(color: color)),
+          Text(label, style: TextStyle(fontSize: 10, color: color)),
         ],
       ),
     );

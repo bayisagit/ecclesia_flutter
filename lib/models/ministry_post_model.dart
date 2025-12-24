@@ -6,6 +6,7 @@ class MinistryPostModel {
   final String title;
   final String content;
   final String imageUrl;
+  final List<String> imageUrls;
   final String audioUrl; // For Bible Study
   final DateTime date;
   final String type; // 'general', 'mission', 'devotional', 'event'
@@ -26,6 +27,7 @@ class MinistryPostModel {
     required this.content,
     required this.date,
     this.imageUrl = '',
+    this.imageUrls = const [],
     this.audioUrl = '',
     this.type = 'general',
     this.likes = 0,
@@ -45,6 +47,7 @@ class MinistryPostModel {
       title: data['title'] ?? '',
       content: data['content'] ?? '',
       imageUrl: data['imageUrl'] ?? '',
+      imageUrls: List<String>.from(data['imageUrls'] ?? []),
       audioUrl: data['audioUrl'] ?? '',
       views: data['views'] ?? 0,
       commentCount: data['commentCount'] ?? 0,
@@ -64,6 +67,7 @@ class MinistryPostModel {
       'title': title,
       'content': content,
       'imageUrl': imageUrl,
+      'imageUrls': imageUrls,
       'audioUrl': audioUrl,
       'date': date,
       'type': type,

@@ -80,7 +80,7 @@ class AnnualVersesSection extends StatelessWidget {
                                         borderRadius: BorderRadius.vertical(
                                           top: Radius.circular(12),
                                         ),
-                                        child: Container(
+                                        child: SizedBox(
                                           width: double.infinity,
                                           child:
                                               verse.imageUrl.startsWith('http')

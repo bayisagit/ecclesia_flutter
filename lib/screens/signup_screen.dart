@@ -164,9 +164,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           prefixIcon: Icon(Icons.lock_outline),
                         ),
                         obscureText: true,
-                        validator: (val) => val!.length < 6
-                            ? 'Enter a password 6+ chars long'
-                            : null,
+                        validator: (val) {
+                          if (val == null || val.isEmpty) {
+                            return 'Please enter a password';
+                          }
+                          if (val.length < 8) {
+                            return 'Password must be at least 8 characters';
+                          }
+                          if (!val.contains(RegExp(r'[A-Z]'))) {
+                            return 'Must contain at least one uppercase letter';
+                          }
+                          if (!val.contains(RegExp(r'[a-z]'))) {
+                            return 'Must contain at least one lowercase letter';
+                          }
+                          if (!val.contains(RegExp(r'[0-9]'))) {
+                            return 'Must contain at least one number';
+                          }
+                          if (!val.contains(
+                            RegExp(r'[!@#\$&*~^%()_+=|<>?{}\[\]~-]'),
+                          )) {
+                            return 'Must contain at least one special character';
+                          }
+                          return null;
+                        },
                         onChanged: (val) {
                           setState(() => password = val);
                         },

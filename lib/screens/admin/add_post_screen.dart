@@ -22,7 +22,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
   final _hopeCountController = TextEditingController();
   final _believedCountController = TextEditingController();
 
-  File? _imageFile;
+  final List<File> _imageFiles = [];
   final ImagePicker _picker = ImagePicker();
 
   String _selectedMinistry = 'Worship Team';
@@ -52,11 +52,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
+  Future<void> _pickImages() async {
+    final List<XFile> pickedFiles = await _picker.pickMultiImage();
+    if (pickedFiles.isNotEmpty) {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _imageFiles.addAll(pickedFiles.map((file) => File(file.path)));
       });
     }
   }
@@ -69,14 +69,15 @@ class _AddPostScreenState extends State<AddPostScreen> {
       });
 
       try {
-        String imageUrl = '';
-        if (_imageFile != null) {
-          imageUrl =
-              await DatabaseService().uploadImage(
-                _imageFile!,
-                'ministry_posts',
-              ) ??
-              '';
+        List<String> imageUrls = [];
+        for (var file in _imageFiles) {
+          String? url = await DatabaseService().uploadImage(
+            file,
+            'ministry_posts',
+          );
+          if (url != null) {
+            imageUrls.add(url);
+          }
         }
 
         final post = MinistryPostModel(
@@ -84,7 +85,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
           ministryName: _selectedMinistry,
           title: _titleController.text,
           content: _contentController.text,
-          imageUrl: imageUrl,
+          imageUrl: imageUrls.isNotEmpty ? imageUrls.first : '',
+          imageUrls: imageUrls,
           audioUrl: _audioUrlController.text,
           date: DateTime.now(),
           type: _selectedType,
@@ -102,7 +104,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
             DateTime.now(), // Or add a date picker if needed
             _selectedMinistry, // Use ministry name as location/context
             user?.uid ?? 'admin',
-            imageUrl,
+            imageUrls.isNotEmpty ? imageUrls.first : '',
           );
         } else {
           await DatabaseService().addMinistryPost(post);
@@ -201,7 +203,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               ),
               SizedBox(height: 16),
               GestureDetector(
-                onTap: _pickImage,
+                onTap: _pickImages,
                 child: Container(
                   width: double.infinity,
                   height: 200,
@@ -214,14 +216,39 @@ class _AddPostScreenState extends State<AddPostScreen> {
                           : Colors.black12,
                     ),
                   ),
-                  child: _imageFile != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: Image.file(
-                            _imageFile!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                          ),
+                  child: _imageFiles.isNotEmpty
+                      ? GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                crossAxisSpacing: 4,
+                                mainAxisSpacing: 4,
+                              ),
+                          itemCount: _imageFiles.length,
+                          itemBuilder: (context, index) {
+                            return Stack(
+                              children: [
+                                Image.file(
+                                  _imageFiles[index],
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: IconButton(
+                                    icon: Icon(Icons.close, color: Colors.red),
+                                    onPressed: () {
+                                      setState(() {
+                                        _imageFiles.removeAt(index);
+                                      });
+                                    },
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         )
                       : Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -233,7 +260,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                             ),
                             SizedBox(height: 10),
                             Text(
-                              'Tap to add image',
+                              'Tap to add images',
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],

@@ -4,7 +4,7 @@ class CommentModel {
   final String id;
   final String userId;
   final String userName;
-  final String userImage;
+  final String? userPhotoUrl;
   final String text;
   final DateTime timestamp;
 
@@ -12,7 +12,7 @@ class CommentModel {
     required this.id,
     required this.userId,
     required this.userName,
-    required this.userImage,
+    this.userPhotoUrl,
     required this.text,
     required this.timestamp,
   });
@@ -23,7 +23,7 @@ class CommentModel {
       id: doc.id,
       userId: data['userId'] ?? '',
       userName: data['userName'] ?? 'Anonymous',
-      userImage: data['userImage'] ?? '',
+      userPhotoUrl: data['userPhotoUrl'],
       text: data['text'] ?? '',
       timestamp: (data['timestamp'] as Timestamp).toDate(),
     );
@@ -33,7 +33,7 @@ class CommentModel {
     return {
       'userId': userId,
       'userName': userName,
-      'userImage': userImage,
+      'userPhotoUrl': userPhotoUrl,
       'text': text,
       'timestamp': timestamp,
     };
